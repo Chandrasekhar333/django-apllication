@@ -1,0 +1,74 @@
+# app.yaml for Simple-Extraction-Demo-Track Django application on Google App Engine Standard
+
+# Specify the Python runtime version. Must match what you're using locally.
+# Ensure this version is supported by App Engine Standard.
+runtime: python39 # Example: python39. You might use python38, python310, etc.
+
+# Use the standard environment.
+env: standard
+
+# The entrypoint command to start your WSGI application.
+# Gunicorn is highly recommended for production Django deployments.
+# IMPORTANT CORRECTION: Point to your project's wsgi.py, not manage.py
+# Replace 'Simple-Extraction-Demo-Track' with the actual name of your
+# outer Django project directory (the one containing wsgi.py).
+entrypoint: gunicorn --bind :$PORT core.wsgi
+
+# Choose an instance class. F1 is the smallest, cost-effective.
+# Scale up (e.g., F2, F4) based on your application's needs and traffic.
+instance_class: F1
+
+# Configure automatic scaling for your application instances.
+# App Engine will automatically adjust the number of instances based on load.
+automatic_scaling:
+  min_instances: 1 # Minimum number of instances to keep running (reduces cold starts).
+  max_instances: 5 # Maximum number of instances App Engine will scale up to.
+  target_cpu_utilization: 0.6 # Try to keep CPU utilization at 60%.
+
+# Handlers define how App Engine routes requests.
+# Since static/media files are served directly from Google Cloud Storage
+# via django-storages, we don't need a static_dir handler here.
+# All incoming requests will be routed to your Django application's entrypoint.
+handlers:
+- url: /.* # Catch all URLs
+  script: auto # Route to the entrypoint defined above
+
+# Environment variables that will be available to your Django application.
+# These are retrieved using os.environ.get() in your settings.py.
+# IMPORTANT CORRECTION: This is the ONLY env_variables block.
+env_variables:
+  # Database Configuration (for Cloud SQL MySQL)
+  # 1. DB_NAME: The name of the database you created in your Cloud SQL instance.
+  #    Find this in: Google Cloud Console -> SQL -> Your Instance -> Databases tab.
+  DB_NAME: djang_db # e.g., extraction_db
+
+  # 2. DB_USER: The username for the database user created in Cloud SQL.
+  #    Find this in: Google Cloud Console -> SQL -> Your Instance -> Users tab.
+  DB_USER: djang_user # e.g., django_user
+
+  # 3. DB_PASSWORD: The password for the DB_USER. You set this during user creation.
+  #    Google Cloud does not display this after creation, so use the one you defined.
+  DB_PASSWORD: Chandu1 # REPLACE THIS if this is not the actual password!
+
+  # 4. CLOUD_SQL_CONNECTION_NAME: The unique connection string for your Cloud SQL instance.
+  #    Find this in: Google Cloud Console -> SQL -> Your Instance -> Overview page (under "Connection name").
+  #    Format: project-id:region:instance-id
+  CLOUD_SQL_CONNECTION_NAME: new-test-project-26417:us-central1:mydb # REPLACE THIS if instance ID is not 'mydb'!
+
+  # Static/Media Files Configuration (for Google Cloud Storage)
+  # 5. GS_BUCKET_NAME: The name of the Google Cloud Storage bucket you created for static/media files.
+  #    Find this in: Google Cloud Console -> Cloud Storage -> Buckets.
+  GS_BUCKET_NAME: my_bucket3849 # e.g., your-simple-extraction-app-bucket
+
+  # Django Specific Environment Variables
+  # 6. SECRET_KEY: A highly sensitive, random string. NEVER hardcode in repository.
+  #    Generate a very long, random string (e.g., using Python's get_random_secret_key).
+  SECRET_KEY: tf=@th6bie_9yifz63l^3ousq3v(sp05a=1nw&(px*1yogj@z!
+
+  # 7. DEBUG: Set to 'False' for production. This disables debug messages and features.
+  DEBUG: 'False'
+
+  # 8. GAE_APPLICATION_URL_HOST: The default host for your App Engine application.
+  #    This is used in ALLOWED_HOSTS in settings.py.
+  #    IMPORTANT CORRECTION: Use the full host from your deployment output.
+  GAE_APPLICATION_URL_HOST: new-test-project-26417.uc.r.appspot.com
